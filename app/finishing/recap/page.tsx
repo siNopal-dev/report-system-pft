@@ -1,0 +1,5 @@
+import {requireUser} from '../../../lib/page-auth';
+import {allowedSections,finishingAllowed} from '../../../lib/finishing';
+import FinishingRecap from '../../../components/finishing-recap';
+export const dynamic='force-dynamic';
+export default async function Page(){const user=await requireUser();if(!finishingAllowed(user))return <p role="alert">Akun Anda belum memiliki akses ke halaman yang tersedia.</p>;return <FinishingRecap username={user.username} role={user.access_role} sections={allowedSections(user)}/>}

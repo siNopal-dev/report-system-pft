@@ -1,0 +1,76 @@
+{
+  "parts": {
+    "headerLeft": "Kode Produksi : P.46\n\nNomor Desain : BB-460745ELKL\n\nNomor Resep : 46BB- -0745E(DB)\n\nNomor Pesanan : -\n\nPESANAN       J\n\nTeni :         26      rem lua      Masuk lub:\n46 Hitam            | sisir 3-3 h\n",
+    "headerRight": "Konstruksi : 30s TR x 30s TR\n70 x 60\n\nCorak      : Bitingan Besar\nIsi Beam :1000 Ptg x 2 Beam\nIND. = oo  ——————\nMesin        : Rappier Double Beam\n\nang\n\nelai          NO REE © ose: aise iia\nNote        : 1, SARUNG\n\nang            mM near\n",
+    "lusiOriginal": "HELAI KG SPRING LUSI\n1.680 80,64 100        Olive Hijau Tua\n764 3667 46 Hitam\n706 3588         dd           Krem Tua\n700 33,60       42        Merah Rose\n3.880 186,24 232\n",
+    "lusiClean": "HELAI KG SPRING LUSI\n\n1680 8064 100 Olive Hijau Tua\n764           36,67            46               Hitam                  oo\n736        35.95         d4           Krem Tua\n\n700 33,60 42       Merah Rose      |\n\nTR an\n",
+    "lusiRows": "HELAI KG SPRING LUSI    |\nDe\n1.680 80,64   100   Olive Hijau Tua |\n|\n764 36,67            46               Hitam                  oa\n\n736 35,33         44           Krem Tua                |\nDn |\n700 33,60        42         Merah Rose          |\nCH\n3880 18624 282 —————————",
+    "lusi": "80.64 Olive Hijau Tua\n36.67 Hitam                  oa\n35.33 Krem Tua\n33.6 Merah Rose",
+    "pakanOriginal": "KEBUTUHAN PAKAN:\n1.900 61,28        —>       Olive Hijau Tua\n1.328 42,83                   Hitam\n960         30,96          —>         Krem Tua\n892      28,77                   Merah Rose\n5080 16383 —M8MMMMM\n",
+    "pakanClean": "KEBUTUHAN PAKAN :                             |\n1.900 61,28        —> Olive Hijau Tua\n1.328 42,83        —>  Hitam        ——\n\n960 3096 >       Krem Tua             |\n892 2877 >  MerahRose\n5.080 163,83\n",
+    "pakanRows": "KEBUTUHAN PAKAN :                             |\n1900 61,28 —> Olive Hijau Tua |\n1.328 42.83         >        Hitam                     |\n960 30,96          ML         Krem Tua                 |\n802 2877        api       Merah Rose           |\n|  rr NON   17, QN                           |\n(SAA ASA           AU, UJ                                                                                                                    |",
+    "pakan": "61.28 Olive Hijau Tua\n42.83 Hitam\n30.96 Krem Tua\n28.77 Merah Rose"
+  },
+  "data": {
+    "identity": {
+      "kode": "P.46",
+      "desain": "BB-460745ELKL",
+      "resep": "46BB- -0745E(DB)",
+      "konstruksi": "30s TR x 30s TR",
+      "corak": "Bitingan Besar",
+      "beam": "1000 Ptg x 2 Beam",
+      "noBeam": "",
+      "mesin": "Rappier Double Beam",
+      "noMesin": ""
+    },
+    "lusi": [
+      {
+        "yarn": "30s TR",
+        "color": "Olive Hijau Tua",
+        "kg": "80.64"
+      },
+      {
+        "yarn": "30s TR",
+        "color": "Hitam                  oa",
+        "kg": "36.67"
+      },
+      {
+        "yarn": "30s TR",
+        "color": "Krem Tua",
+        "kg": "35.33"
+      },
+      {
+        "yarn": "30s TR",
+        "color": "Merah Rose",
+        "kg": "33.6"
+      }
+    ],
+    "pakan": [
+      {
+        "yarn": "30s TR",
+        "color": "Olive Hijau Tua",
+        "kg": "61.28"
+      },
+      {
+        "yarn": "30s TR",
+        "color": "Hitam",
+        "kg": "42.83"
+      },
+      {
+        "yarn": "30s TR",
+        "color": "Krem Tua",
+        "kg": "30.96"
+      },
+      {
+        "yarn": "30s TR",
+        "color": "Merah Rose",
+        "kg": "28.77"
+      }
+    ],
+    "printed": {
+      "lusi": null,
+      "pakan": null
+    },
+    "notes": ""
+  }
+}
