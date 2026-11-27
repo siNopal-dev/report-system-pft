@@ -16,6 +16,7 @@ export default function PrintingRecap({ username, role }: { username: string; ro
   const [rows, setRows] = useState<PrintingRow[]>([]);
   const [filter, setFilter] = useState<Filter>({ from: '', to: '', machine: '', unit: '' });
   const [message, setMessage] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -29,6 +30,20 @@ export default function PrintingRecap({ username, role }: { username: string; ro
     }
   }, []);
   useEffect(() => { void load(); }, [load]);
+
+  async function remove(row: PrintingRow) {
+    if (!window.confirm(`Hapus produksi ${row.mc_flat} tanggal ${row.production_date}?`)) return;
+    setDeleting(row.id);
+    setMessage('');
+    try {
+      const response = await fetch(`/api/printing/production?id=${encodeURIComponent(row.id)}`, { method: 'DELETE' });
+      const body = await response.json();
+      if (!response.ok) throw Error(body.error || 'Gagal menghapus data.');
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Gagal menghapus data.');
+    } finally { setDeleting(null); }
+  }
 
   const filtered = useMemo(() => rows.filter(row =>
     (!filter.from || row.production_date >= filter.from) &&
@@ -54,9 +69,9 @@ export default function PrintingRecap({ username, role }: { username: string; ro
       <label>Satuan<select value={filter.unit} onChange={event => setFilter({ ...filter, unit: event.target.value })}><option value="">Semua Satuan</option><option>Meter</option><option>Kodi</option></select></label>
     </div></section>
     <section className="panel"><div className="section-head"><h2>Daftar Produksi</h2><div className="row-actions"><button onClick={() => void load()}>Muat Ulang</button><button onClick={() => location.assign('/printing')}>Tambah Data</button></div></div>
-      <div className="table"><table><thead><tr>{['Tanggal','Shift','MC Flat','Jumlah Produksi','Satuan','Downtime (menit)','Kendala','Keterangan'].map(header => <th key={header}>{header}</th>)}</tr></thead>
-        <tbody>{filtered.map(row => <tr key={row.id}><td>{row.production_date}</td><td>{row.shift}</td><td>{row.mc_flat}</td><td>{fmt(row.production_quantity)}</td><td>{row.unit}</td><td>{fmt(row.lost_minutes)}</td><td>{row.issues.map((entry,index) => <div key={index}>{index+1}. {entry.issue}{entry.lost_minutes === null ? '' : ` — ${entry.lost_minutes} menit`}</div>)}</td><td>{row.notes || '—'}</td></tr>)}</tbody>
-        <tfoot><tr><th colSpan={3} scope="row">Total ({fmt(filtered.length)} input)</th><td><strong>{fmt(meters)} meter<br/>{fmt(kodi)} kodi</strong></td><td></td><td><strong>{fmt(minutes)} menit</strong></td><td colSpan={2}></td></tr></tfoot></table>
+      <div className="table"><table><thead><tr>{['Tanggal','Shift','MC Flat','Jumlah Produksi','Satuan','Downtime (menit)','Kendala','Keterangan','Aksi'].map(header => <th key={header}>{header}</th>)}</tr></thead>
+        <tbody>{filtered.map(row => <tr key={row.id}><td>{row.production_date}</td><td>{row.shift}</td><td>{row.mc_flat}</td><td>{fmt(row.production_quantity)}</td><td>{row.unit}</td><td>{fmt(row.lost_minutes)}</td><td>{row.issues.map((entry,index) => <div key={index}>{index+1}. {entry.issue}{entry.lost_minutes === null ? '' : ` — ${entry.lost_minutes} menit`}</div>)}</td><td>{row.notes || '—'}</td><td><div className="row-actions"><a className="link-button" href={`/printing?edit=${encodeURIComponent(row.id)}`}>Edit</a><button className="delete-recipe" type="button" disabled={deleting !== null} onClick={() => void remove(row)}>{deleting === row.id ? 'Menghapus…' : 'Hapus'}</button></div></td></tr>)}</tbody>
+        <tfoot><tr><th colSpan={3} scope="row">Total ({fmt(filtered.length)} input)</th><td><strong>{fmt(meters)} meter<br/>{fmt(kodi)} kodi</strong></td><td>Terpisah menurut satuan</td><td><strong>{fmt(minutes)} menit</strong></td><td colSpan={3}></td></tr></tfoot></table>
         {!filtered.length && <p className="empty">Belum ada catatan untuk filter ini.</p>}
       </div>
     </section>

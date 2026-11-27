@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useSearchParams } from 'next/navigation';
 import AppShell from './app-shell';
 
 const issues = [
@@ -58,9 +59,36 @@ type PrintingInputProps = {
 };
 
 export default function PrintingInput({ username, role }: PrintingInputProps) {
+  const editId = useSearchParams().get('edit');
   const [form, setForm] = useState<LostTimeForm>(initialForm);
+  const [loading, setLoading] = useState(!!editId);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!editId) return;
+    let active = true;
+    fetch(`/api/printing/production?id=${encodeURIComponent(editId)}`, { cache: 'no-store' })
+      .then(async response => {
+        const body = await response.json();
+        if (!response.ok) throw Error(body.error || 'Gagal memuat data.');
+        if (active) setForm({
+          production_date: body.data.production_date,
+          shift: body.data.shift,
+          mc_flat: body.data.mc_flat,
+          production_quantity: String(body.data.production_quantity),
+          unit: body.data.unit,
+          issues: body.data.issues.map((entry: { issue: string; lost_minutes: number | null }) => ({
+            issue: entry.issue,
+            lost_minutes: entry.lost_minutes === null ? '' : String(entry.lost_minutes),
+          })),
+          notes: body.data.notes,
+        });
+      })
+      .catch(error => { if (active) setMessage(error.message); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [editId]);
 
   function updateIssue(index: number, change: Partial<IssueRow>) {
     setForm((current) => ({
@@ -108,15 +136,18 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
 
     try {
       const response = await fetch('/api/printing/production', {
-        method: 'POST',
+        method: editId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(editId ? { id: editId, data: form } : form),
       });
       const body = await response.json();
       if (!response.ok) throw Error(body.error);
 
-      setForm(initialForm());
-      setMessage('Data produksi printing berhasil disimpan.');
+      if (editId) location.assign('/printing/recap');
+      else {
+        setForm(initialForm());
+        setMessage('Data produksi printing berhasil disimpan.');
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Gagal menyimpan.');
     } finally {
@@ -128,13 +159,13 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
     <AppShell username={username} role={role}>
       <div className="page-heading">
         <small>PRINTING · PRODUKSI</small>
-        <h1>Input Produksi Printing</h1>
+        <h1>{editId ? 'Edit Produksi Printing' : 'Input Produksi Printing'}</h1>
         <p>Catat produksi dan waktu berhenti mesin flat.</p>
       </div>
 
       <section className="panel">
-        <h2>Input Produksi Printing</h2>
-        <form onSubmit={save}>
+        <h2>{editId ? 'Edit Produksi Printing' : 'Input Produksi Printing'}</h2>
+        {loading ? <p>Memuat data…</p> : <form onSubmit={save}>
           <div className="grid">
             <label>
               Tanggal
@@ -261,13 +292,13 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
 
           <div className="actions">
             <button className="primary" disabled={busy}>
-              {busy ? 'Menyimpan…' : 'Simpan Data'}
+              {busy ? 'Menyimpan…' : editId ? 'Simpan Perubahan' : 'Simpan Data'}
             </button>
             <button type="button" onClick={() => location.assign('/printing/recap')}>
               Lihat Rekap Produksi Printing
             </button>
           </div>
-        </form>
+        </form>}
       </section>
 
       {message && (
