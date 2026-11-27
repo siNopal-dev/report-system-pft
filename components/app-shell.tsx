@@ -17,7 +17,7 @@ const menu: (MenuGroup & { access: string[] })[] = [
   { heading: 'RESEP FA', access: ['all'], items: [
     {label:'Scan Resep FA',href:'/'},{label:'Arsip Resep',href:'/recipes/archive'} ] },
   { heading: 'PRINTING', access: ['all','printing'], items: [
-    {label:'Pencatatan Lost Time',href:'/printing'},{label:'Rekap Lost Time',href:'/printing/recap'} ] },
+    {label:'Input Produksi Printing',href:'/printing'},{label:'Rekap Produksi Printing',href:'/printing/recap'} ] },
   { heading: 'FINISHING', access: ['all','finishing','process'], items: [
     {label:'Input Produksi Finishing',href:'/finishing'},{label:'Rekap Produksi Finishing',href:'/finishing/recap'} ] },
 ];

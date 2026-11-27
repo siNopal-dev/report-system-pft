@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import AppShell from './app-shell';
 
 const issues = [
+  'Tidak Ada',
   'Ganti Motif/Warna',
   'Cuci Plangkan',
   'Persiapan Produksi',
@@ -30,7 +31,8 @@ type LostTimeForm = {
   production_date: string;
   shift: string;
   mc_flat: string;
-  production_meters: string;
+  production_quantity: string;
+  unit: string;
   issues: IssueRow[];
   notes: string;
 };
@@ -44,8 +46,9 @@ const initialForm = (): LostTimeForm => ({
   }).format(new Date()),
   shift: 'Shift 1',
   mc_flat: 'F1',
-  production_meters: '',
-  issues: [{ issue: issues[0], lost_minutes: '' }],
+  production_quantity: '',
+  unit: 'Meter',
+  issues: [{ issue: 'Tidak Ada', lost_minutes: '' }],
   notes: '',
 });
 
@@ -71,7 +74,7 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
   function addIssue() {
     setForm((current) => ({
       ...current,
-      issues: [...current.issues, { issue: issues[0], lost_minutes: '' }],
+      issues: [...current.issues.filter(row => row.issue !== 'Tidak Ada'), { issue: 'Ganti Motif/Warna', lost_minutes: '' }],
     }));
   }
 
@@ -96,7 +99,7 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
     );
 
     if (totalMinutes > 1440) {
-      setMessage('Total Lost Time tidak boleh lebih dari 1.440 menit per hari.');
+      setMessage('Total downtime tidak boleh lebih dari 1.440 menit per hari.');
       return;
     }
 
@@ -104,7 +107,7 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
     setMessage('');
 
     try {
-      const response = await fetch('/api/printing/lost-time', {
+      const response = await fetch('/api/printing/production', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -113,7 +116,7 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
       if (!response.ok) throw Error(body.error);
 
       setForm(initialForm());
-      setMessage('Data lost time berhasil disimpan.');
+      setMessage('Data produksi printing berhasil disimpan.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Gagal menyimpan.');
     } finally {
@@ -125,12 +128,12 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
     <AppShell username={username} role={role}>
       <div className="page-heading">
         <small>PRINTING · PRODUKSI</small>
-        <h1>Pencatatan Lost Time</h1>
+        <h1>Input Produksi Printing</h1>
         <p>Catat produksi dan waktu berhenti mesin flat.</p>
       </div>
 
       <section className="panel">
-        <h2>Input Lost Time</h2>
+        <h2>Input Produksi Printing</h2>
         <form onSubmit={save}>
           <div className="grid">
             <label>
@@ -170,21 +173,27 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
             </label>
 
             <label>
-              Jumlah Produksi (Meter)
+              Jumlah Produksi
               <input
                 type="number"
                 min="0"
                 step="0.01"
                 required
-                value={form.production_meters}
+                value={form.production_quantity}
                 onChange={(event) =>
-                  setForm({ ...form, production_meters: event.target.value })
+                  setForm({ ...form, production_quantity: event.target.value })
                 }
               />
             </label>
+            <label>
+              Satuan
+              <select value={form.unit} onChange={(event) => setForm({ ...form, unit: event.target.value })}>
+                <option>Meter</option><option>Kodi</option>
+              </select>
+            </label>
           </div>
 
-          <h2 style={{ marginTop: 24 }}>Daftar Kendala</h2>
+          <h2 style={{ marginTop: 24 }}>Daftar Downtime / Kendala</h2>
 
           {form.issues.map((row, index) => (
             <div
@@ -193,13 +202,13 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
               style={{ marginBottom: 14, alignItems: 'end' }}
             >
               <label>
-                Lost Time {index + 1} (menit)
+                Downtime {index + 1} (menit, opsional)
                 <input
                   type="number"
                   min="0"
                   max="1440"
                   step="1"
-                  required
+                  disabled={row.issue === 'Tidak Ada'}
                   value={row.lost_minutes}
                   onChange={(event) =>
                     updateIssue(index, { lost_minutes: event.target.value })
@@ -212,10 +221,10 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
                 <select
                   value={row.issue}
                   onChange={(event) =>
-                    updateIssue(index, { issue: event.target.value })
+                    updateIssue(index, { issue: event.target.value, lost_minutes: event.target.value === 'Tidak Ada' ? '' : row.lost_minutes })
                   }
                 >
-                  {issues.map((issue) => (
+                  {issues.filter((issue) => issue !== 'Tidak Ada' || form.issues.length === 1).map((issue) => (
                     <option key={issue}>{issue}</option>
                   ))}
                 </select>
@@ -255,7 +264,7 @@ export default function PrintingInput({ username, role }: PrintingInputProps) {
               {busy ? 'Menyimpan…' : 'Simpan Data'}
             </button>
             <button type="button" onClick={() => location.assign('/printing/recap')}>
-              Lihat Rekap Lost Time
+              Lihat Rekap Produksi Printing
             </button>
           </div>
         </form>
