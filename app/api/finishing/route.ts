@@ -25,8 +25,11 @@ export async function GET(request: NextRequest) {
     if (!Number.isSafeInteger(page) || page < 1 || page > 100000) return fail('Halaman tidak valid.',400);
     const {rows} = await database().query(`select ${columns} from public.finishing_production where ${where.sql} order by production_date desc,created_at desc,id desc limit 100 offset $${where.values.length+1}`, [...where.values,(page-1)*100]);
     const summary = await database().query(`select section,unit,count(*)::int as entries,coalesce(sum(production_quantity),0)::float8 as total from public.finishing_production where ${where.sql} group by section,unit`,where.values);
-    const count = await database().query(`select count(*)::int as total from public.finishing_production where ${where.sql}`,where.values);
-    return NextResponse.json({data:rows,summary:summary.rows,total:count.rows[0].total,page}, {headers:{'Cache-Control':'no-store'}});
+    const count = await database().query(`select count(*)::int as total,
+      coalesce(sum(coalesce((select sum((issue_row->>'lost_minutes')::numeric)
+      from jsonb_array_elements(issues) as issue_row),0)),0)::float8 as total_downtime
+      from public.finishing_production where ${where.sql}`,where.values);
+    return NextResponse.json({data:rows,summary:summary.rows,total:count.rows[0].total,totalDowntime:count.rows[0].total_downtime,page}, {headers:{'Cache-Control':'no-store'}});
   } catch { return fail('Gagal memuat data finishing.',500); }
 }
 async function bodyOf(request: NextRequest) {
