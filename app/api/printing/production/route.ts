@@ -6,6 +6,8 @@ export const dynamic = 'force-dynamic';
 
 const shifts = ['Shift 1', 'Shift 2', 'Shift 3'];
 const machines = ['F1', 'F2', 'F3'];
+const validId = (id: unknown): id is string => typeof id === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 const issues = [
   'Tidak Ada',
   'Ganti Motif/Warna',
@@ -105,7 +107,7 @@ function validate(value: unknown) {
   };
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const user = await currentUser();
     if (!user) return fail('Silakan login.', 401);
@@ -114,17 +116,69 @@ export async function GET() {
       return fail('Akses printing belum diberikan.', 403);
     }
 
+    const id = request.nextUrl.searchParams.get('id');
+    if (id !== null && !validId(id)) return fail('ID tidak valid.', 400);
     const { rows } = await database().query(
-      'select id,production_date::text,shift,mc_flat,coalesce(production_quantity,production_meters)::float8 as production_quantity,unit,lost_minutes,issue,issues,notes,created_at from public.printing_lost_time order by production_date desc,created_at desc limit 5000',
+      `select id,production_date::text,shift,mc_flat,
+        coalesce(production_quantity,production_meters)::float8 as production_quantity,
+        unit,lost_minutes,issue,issues,notes,created_at
+       from public.printing_lost_time
+       ${id ? 'where id=$1' : 'order by production_date desc,created_at desc limit 5000'}`,
+      id ? [id] : [],
     );
 
+    if (id && !rows.length) return fail('Data tidak ditemukan.', 404);
+
     return NextResponse.json(
-      { data: rows },
+      { data: id ? rows[0] : rows },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch {
     return fail('Gagal memuat data produksi printing.', 500);
   }
+}
+
+async function parseBody(request: NextRequest) {
+  const text = await request.text();
+  if (text.length > 4000) return null;
+  try { return JSON.parse(text); } catch { return null; }
+}
+
+export async function PUT(request: NextRequest) {
+  if (!sameOrigin(request)) return fail('Permintaan tidak diizinkan.', 403);
+  try {
+    const user = await currentUser();
+    if (!user) return fail('Silakan login.', 401);
+    if (user.access_role !== 'printing' && user.access_role !== 'all') return fail('Akses printing belum diberikan.', 403);
+
+    const body = await parseBody(request);
+    if (!validId(body?.id)) return fail('ID tidak valid.', 400);
+    const value = validate(body?.data);
+    if (!value) return fail('Periksa tanggal, pilihan, dan angka pada formulir.', 400);
+
+    const { rows } = await database().query(
+      `update public.printing_lost_time set production_date=$1,shift=$2,mc_flat=$3,
+       production_quantity=$4,unit=$5,production_meters=$6,lost_minutes=$7,
+       issue=$8,issues=$9::jsonb,notes=$10,updated_at=now() where id=$11 returning id`,
+      [value.date,value.shift,value.machine,value.quantity,value.unit,
+        value.unit === 'Meter' ? value.quantity : null,value.minutes,value.issue,
+        JSON.stringify(value.entries),value.notes,body.id],
+    );
+    return rows.length ? NextResponse.json({ id: rows[0].id }) : fail('Data tidak ditemukan.', 404);
+  } catch { return fail('Gagal memperbarui data produksi printing.', 500); }
+}
+
+export async function DELETE(request: NextRequest) {
+  if (!sameOrigin(request)) return fail('Permintaan tidak diizinkan.', 403);
+  try {
+    const user = await currentUser();
+    if (!user) return fail('Silakan login.', 401);
+    if (user.access_role !== 'printing' && user.access_role !== 'all') return fail('Akses printing belum diberikan.', 403);
+    const id = request.nextUrl.searchParams.get('id');
+    if (!validId(id)) return fail('ID tidak valid.', 400);
+    const { rowCount } = await database().query('delete from public.printing_lost_time where id=$1', [id]);
+    return rowCount ? NextResponse.json({ ok: true }) : fail('Data tidak ditemukan.', 404);
+  } catch { return fail('Gagal menghapus data produksi printing.', 500); }
 }
 
 export async function POST(request: NextRequest) {
