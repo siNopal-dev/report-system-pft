@@ -1,5 +1,6 @@
 import { requireUser } from '../../lib/page-auth';
 import PrintingInput from '../../components/printing-input';
+import { Suspense } from 'react';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,5 +11,5 @@ export default async function Page() {
     const { redirect } = await import('next/navigation');
     redirect('/finishing');
   }
-  return <PrintingInput username={user.username} role={user.access_role} />;
+  return <Suspense fallback={<p>Memuat formulir…</p>}><PrintingInput username={user.username} role={user.access_role} /></Suspense>;
 }
