@@ -30,8 +30,8 @@ async function write(request:NextRequest,mode:'add'|'edit'){
   const {rowCount}=await database().query('insert into public.finishing_daily_report(report_date,section,values_json) values($1,$2,$3::jsonb) on conflict do nothing',[date,section.id,JSON.stringify(values)]);
   if(!rowCount)return fail('Tanggal ini sudah berisi data. Gunakan tombol Edit.',409);
  }else{
-  if(typeof body.version!=='string'||!/^\d{4}-\d{2}-\d{2}T/.test(body.version))return fail('Versi data tidak valid. Muat ulang halaman.',400);
-  const {rowCount}=await database().query('update public.finishing_daily_report set values_json=$3::jsonb,updated_at=clock_timestamp() where report_date=$1 and section=$2 and updated_at=$4::timestamptz',[date,section.id,JSON.stringify(values),body.version]);
+  if(typeof body.version!=='string'||body.version.length<20||body.version.length>80)return fail('Versi data tidak valid. Muat ulang halaman.',400);
+  const {rowCount}=await database().query('update public.finishing_daily_report set values_json=$3::jsonb,updated_at=clock_timestamp() where report_date=$1 and section=$2 and updated_at::text=$4',[date,section.id,JSON.stringify(values),body.version]);
   if(!rowCount)return fail('Data telah berubah atau tidak ditemukan. Muat ulang sebelum mengedit.',409);
  }
  return NextResponse.json({ok:true});
