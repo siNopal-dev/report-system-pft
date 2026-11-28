@@ -19,7 +19,7 @@ const menu: (MenuGroup & { access: string[] })[] = [
   { heading: 'PRINTING', access: ['all','printing'], items: [
     {label:'Input Produksi Printing',href:'/printing'},{label:'Rekap Produksi Printing',href:'/printing/recap'} ] },
   { heading: 'FINISHING', access: ['all','finishing','process'], items: [
-    {label:'Input Produksi Finishing',href:'/finishing'},{label:'Rekap Produksi Finishing',href:'/finishing/recap'} ] },
+    {label:'Input Produksi Finishing',href:'/finishing'},{label:'Rekap Produksi Finishing',href:'/finishing/recap'},{label:'Laporan Produksi Finishing',href:'/finishing/report'} ] },
 ];
 
 type AppShellProps = {
